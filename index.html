@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Unified Physics Simulator — 2025</title>
+  <link rel="stylesheet" href="styles.css"/>
+</head>
+<body class="theme-dark">
+  <header class="u-header">
+    <div class="u-title">
+      <strong>Unified Physics Simulator — 2025</strong>
+      <span class="u-sub">واجهة موحّدة: GR + Quantum + Double-Slit</span>
+    </div>
+    <nav class="u-tabs" role="tablist" aria-label="Simulators">
+      <button class="u-tab is-active" data-sim="gr" aria-selected="true" role="tab">🌀 الزمكان (GR)</button>
+      <button class="u-tab" data-sim="qm" role="tab">⚛️ الكم (Quantum)</button>
+      <button class="u-tab" data-sim="slit" role="tab">🌊 الشق المزدوج</button>
+    </nav>
+    <div class="u-actions">
+      <span class="u-fps">FPS: <b id="fps">—</b></span>
+      <button id="themeToggle" class="u-btn">🌙 / ☀️</button>
+    </div>
+  </header>
+
+  <main class="u-main">
+    <!-- ثلاث إطارات يتم إظهار/إخفاء كل واحد حسب التبويب -->
+    <!-- ملاحظة: حدّث مسارات src أدناه إذا كانت ملفاتك بأسماء مختلفة -->
+    <iframe id="frame-gr"   class="u-frame is-visible"   src="gr.html"      title="General Relativity Simulator"  loading="eager"></iframe>
+    <iframe id="frame-qm"   class="u-frame"               src="quantum.html" title="Quantum Simulator"             loading="eager"></iframe>
+    <iframe id="frame-slit" class="u-frame"               src="main.html"    title="Double-Slit Simulator"         loading="eager"></iframe>
+
+  </main>
+
+  <footer class="u-footer">
+    <small>© 2025 — نفس الأداء والميزات، واجهة واحدة فقط. يعمل محليًا بالكامل (بدون مكتبات خارجية).</small>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>

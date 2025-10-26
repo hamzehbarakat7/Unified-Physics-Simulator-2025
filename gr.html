@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>محاكي الزمكان 3D — نسخة أدق</title>
+<style>
+  :root{ --bg:#0b0f16; --panel:#0f1624; --accent:#59c1ff; --muted:#9fb3c8; --good:#7ee787; --warn:#ffd166; --bad:#ff6b6b; --grid:#1f2a3d; --text:#e6edf3; --header:#0c1420; }
+:root.light{ --bg:#f7f9fc; --panel:#ffffff; --accent:#0066ff; --muted:#5a6b7e; --good:#1f8f3a; --warn:#a36b00; --bad:#c03d3d; --grid:#e6eef6; --text:#0f172a; --header:#ffffff; }
+*{box-sizing:border-box}
+html,body{height:100%;margin:0;overflow:hidden}
+body{background:var(--bg);color:var(--text);font:14px/1.5 system-ui,Segoe UI,Roboto,Arial}
+header{display:flex;align-items:center;gap:12px;padding:10px 14px;background:var(--header);border-bottom:1px solid #152033;z-index:5}
+header h1{font-size:16px;margin:0;color:#cfe3ff}
+:root.light header h1{color:#003366}
+header .badge{padding:3px 8px;border:1px solid #22324a;border-radius:9999px;color:#c2d4ee;font-size:12px}
+header .legend{margin-inline-start:auto;display:flex;gap:8px;flex-wrap:wrap}
+.wrap{display:flex;flex-direction:column;height:calc(100vh - 44px)}
+.main-content{flex:1;position:relative;overflow:hidden;background:radial-gradient(1400px 900px at 50% 40%, #0f1a2a 0, var(--bg) 70%)}
+:root.light .main-content{background:radial-gradient(1400px 900px at 50% 40%, #e6f0ff 0, var(--bg) 70%)}
+aside{background:var(--panel);border-top:1px solid #152033;padding:12px;display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:10px;max-height:35vh;overflow-y:auto}
+.group{border:1px solid #1f2a3d;border-radius:10px;padding:10px;background:color-mix(in srgb, var(--panel) 94%, #000 6%)}
+.group h3{margin:0 0 8px 0;font-size:13px;color:#cfe3ff}
+:root.light .group h3{color:#003366}
+.group h4{margin:0 0 6px 0;font-size:12px;color:#b9d3ff}
+label{display:grid;grid-template-columns: 1fr auto; gap:6px; align-items:center;margin:5px 0;font-size:12px}
+input[type="number"], input[type="text"], select{width:140px;background:#0c1320;color:#e6edf3;border:1px solid #1f2a3d;border-radius:6px;padding:5px;font-size:12px}
+:root.light input[type="number"], :root.light input[type="text"], :root.light select{background:#f1f5fb;color:#0f172a;border-color:#cbd5e1}
+input[type="checkbox"]{transform:scale(1.1)}
+input[type="range"]{width:100%}
+button{background:#122035;border:1px solid #283a57;color:#e6f2ff;border-radius:8px;padding:6px 10px;cursor:pointer;font-size:12px}
+button:hover{border-color:#3c577f;background:#1a2a45}
+:root.light button{background:#e6f0ff;border-color:#bfd4ff;color:#003366}
+.row{display:flex;gap:8px;flex-wrap:wrap} .row > *{flex:1}
+.pill{padding:4px 8px;border-radius:9999px;border:1px solid #22324a;color:#c9ddff;font-size:11px}
+#view{display:block;width:100%;height:100%}
+.hud{position:absolute;left:10px;top:10px;background:rgba(15,22,36,.85);border:1px solid #1f2a3d;border-radius:10px;padding:10px;backdrop-filter:blur(6px);min-width:260px;max-width:320px}
+:root.light .hud{background:rgba(255,255,255,.85);border-color:#cbd5e1}
+.grid{display:grid;grid-template-columns:auto 1fr;gap:4px 10px;align-items:center;font-size:11px}
+.cards{display:grid;gap:8px;grid-template-columns:repeat(auto-fit,minmax(180px,1fr))}
+.card{background:#0e1626;border:1px solid #1f2a3d;border-radius:8px;padding:8px;font-size:11px}
+:root.light .card{background:#ffffff;border-color:#e2e8f0}
+.card h4{margin:0 0 6px 0;font-size:12px;color:#cfe3ff;display:flex;justify-content:space-between;align-items:center}
+:root.light .card h4{color:#003366}
+.card .meta{display:grid;grid-template-columns:auto 1fr;gap:3px 8px;color:#9fb3c8}
+:root.light .card .meta{color:#334155}
+.card .rowBtns{display:flex;gap:4px;margin-top:6px}
+.card button{padding:4px 8px;font-size:10px}
+.badgeSmall{padding:2px 5px;border:1px solid #28405e;border-radius:999px;color:#9fd1ff;font-size:10px}
+.selected{outline:2px solid var(--accent)}
+#chart{display:block;margin-top:8px;width:100%;height:90px}
+.toggleTheme{margin-inline-start:8px}
+/* Pink theme */
+:root.pink{
+  --bg:#160914; --panel:#1e0f1a; --accent:#ff4da6; --muted:#c89ab6;
+  --good:#ff9bd1; --warn:#ffd166; --bad:#ff6b6b;
+  --grid:#2a1530; --text:#ffe7f4; --header:#1a0e17;
+}
+
+/* Black (not blue) */
+:root.black{
+  --bg:#000000; --panel:#0a0a0a; --accent:#f0b90b; /* ذهبي، بعيد عن الأزرق */
+  --muted:#b8b8b8; --good:#9efc3b; --warn:#ffd166; --bad:#ff5757;
+  --grid:#151515; --text:#f5f5f5; --header:#000000;
+}
+
+/* High-Contrast */
+:root.highcontrast{
+  --bg:#000; --panel:#000; --accent:#ffff00;
+  --muted:#ffffff; --good:#00ff00; --warn:#ffff00; --bad:#ff0000;
+  --grid:#ffffff; --text:#ffffff; --header:#000;
+}
+
+/* Light-Blue */
+:root.lightblue{
+  --bg:#f2f8ff; --panel:#ffffff; --accent:#3aa1ff;
+  --muted:#51708f; --good:#1f8f3a; --warn:#a36b00; --bad:#c03d3d;
+  --grid:#e3f0ff; --text:#0f172a; --header:#ffffff;
+}
+
+/* (اختياري) تحسين ألوان العناوين حسب المتغيرات */
+header h1{ color: var(--accent); }
+:root.light header h1{ color:#003366 } /* إبقِ القديمة إن رغبت */
+
+
+</style>
+</head>
+<body>
+<header>
+  <h1>محاكي الزمكان 3D</h1>
+  <span class="badge">RK4 تكيفي + 1PN (نسبي) + 3D</span>
+  <div class="legend">
+    <span class="pill">إسقاط 3D</span>
+    <span class="pill">مسارات</span>
+  </div>
+  <select id="themeSelect" class="toggleTheme" title="المظهر">
+  <option value="default">Dark (الافتراضي)</option>
+  <option value="light">Light</option>
+  <option value="pink">Pink</option>
+  <option value="black">Black</option>
+  <option value="highcontrast">High-Contrast</option>
+  <option value="lightblue">Light-Blue</option>
+</select>
+
+<button id="btnTheme" class="toggleTheme">بدّل المظهر ⟳</button>
+
+</header>
+
+<div class="wrap">
+  <div class="main-content">
+    <canvas id="view"></canvas>
+    <div class="hud">
+      <h4>لوحة فيزيائية</h4>
+      <div class="grid" id="stats"></div>
+      <canvas id="chart"></canvas>
+    </div>
+  </div>
+
+  <aside>
+    <div class="group">
+      <h3>التحكم</h3>
+      <div class="row">
+        <button id="btnPlay">▶ تشغيل</button>
+        <button id="btnStep">⏭ خطوة</button>
+        <button id="btnReset">⟲ إعادة</button>
+      </div>
+      <label>السرعة <input type="number" id="speedMul" step="0.5" value="1" style="width:80px" /></label>
+      <label>Δt (ث) <input type="number" id="dt" step="0.1" value="1" style="width:80px" /></label>
+      <label><input type="checkbox" id="adaptive" checked /> تكيفي</label>
+      <label><input type="checkbox" id="enablePN" /> 1PN</label>
+      <!-- بعد سطر <label><input type="checkbox" id="enablePN" /> 1PN</label> -->
+    <label><input type="checkbox" id="enablePN2" /> 2PN (دقة عالية)</label>
+    <label><input type="checkbox" id="tidalForces" /> قوى المد والجزر</label>
+    <label><input type="checkbox" id="gravWaves" /> موجات الجاذبية</label>
+
+<!-- في نهاية الصف الذي يحتوي على أزرار التحكم -->
+<button id="btnAnalyze">📊 تحليل</button>
+      <label>التصادم
+        <select id="collisionMode" style="width:100px">
+          <option value="none">بدون</option>
+          <option value="merge">دمج</option>
+        </select>
+      </label>
+      <div class="row" style="margin-top:6px">
+        <button id="btnWarmup">🔥 تسخين (200)</button>
+      </div>
+    </div>
+
+    <div class="group">
+      <h4>كاميرا 3D</h4>
+      <label>تكبير <input id="zoomRange" type="range" min="-200" max="200" step="2" value="0" /></label>
+      <label>دوران أفقي <input id="rotY" type="range" min="0" max="360" step="2" value="45" /></label>
+      <label>دوران عمودي <input id="rotX" type="range" min="-90" max="90" step="2" value="30" /></label>
+      <small class="muted" id="zoomLabel">—</small>
+    </div>
+
+    <div class="group">
+      <h3>مشاهد جاهزة</h3>
+      <select id="preset" style="width:100%">
+        <option value="solar">نظام شمسي</option>
+        <option value="binary">نجمان ثنائيان</option>
+        <option value="three">مشكلة الثلاثة</option>
+        <option value="bhStar">ثقب أسود</option>
+        <option value="random">عشوائي</option>
+      </select>
+      <button id="btnLoadPreset" style="width:100%;margin-top:6px">تحميل</button>
+    </div>
+
+    <div class="group">
+      <h3>إضافة جرم</h3>
+      <label>اسم <input id="bName" value="Body" style="width:100px"/></label>
+      <label>كتلة <input id="bMass" type="number" value="5.972e24" style="width:100px"/></label>
+      <label>x <input id="bX" type="number" value="1.5e11" style="width:100px"/></label>
+      <label>y <input id="bY" type="number" value="0" style="width:100px"/></label>
+      <label>z <input id="bZ" type="number" value="0" style="width:100px"/></label>
+      <label>vx <input id="bVX" type="number" value="0" style="width:100px"/></label>
+      <label>vy <input id="bVY" type="number" value="29780" style="width:100px"/></label>
+      <label>vz <input id="bVZ" type="number" value="0" style="width:100px"/></label>
+      <div class="row" style="margin-top:6px">
+        <button id="btnAdd">➕ إضافة</button>
+        <button id="btnClear">🗑️ حذف الكل</button>
+      </div>
+    </div>
+
+    <div class="group">
+      <h3>خيارات</h3>
+      <label><input type="checkbox" id="showTrails" checked /> المسارات</label>
+      <label><input type="checkbox" id="showGrid" checked /> الشبكة</label>
+      <!-- بعد سطر <label><input type="checkbox" id="showGrid" checked /> الشبكة</label> -->
+<label><input type="checkbox" id="showDistChart" /> رسم المسافات</label>
+      <label>تتبع <select id="track" style="width:100px"></select></label>
+      <button id="btnTrackRecalc" style="width:100%;margin-top:4px">🎯 تتبع + إعادة حساب 40ث</button>
+      <label>وضع التتبع
+  <select id="trackMode" style="width:120px">
+    <option value="free">حر</option>
+    <option value="body">جسم</option>
+    <option value="group">مجموعة</option>
+    <option value="cm">المرجح (CM)</option>
+  </select>
+</label>
+<small style="opacity:.8">في وضع “مجموعة” اختر الأجسام من بطاقاتها (زر 🎯)</small>
+
+      <button id="btnCSV" style="width:100%;margin-top:4px">💾 حفظ CSV</button>
+      <label><input type="checkbox" id="autoReorbit" checked /> إعادة حساب كل 30ث</label>
+      <button id="btnReorbit" style="width:100%">↻ إعادة حساب الآن</button>
+      <label><input type="checkbox" id="anchorHeavy" checked /> تثبيت الأثقل كمرجع</label>
+      <button id="btnBary" style="width:100%;margin-top:4px">↔ إطار باري-مركزي (طرح CM)</button>
+      <button id="btnAnchorHeavy" style="width:100%;margin-top:4px">🎯 تثبيت الأصل عند الأثقل</button>
+      <button id="btnRetune" style="width:100%;margin-top:4px">⚙️ سرعات دائرية حول الأثقل</button>
+
+    </div>
+
+    <div class="group">
+      <h3>بطاقات الأجسام</h3>
+      <div id="bodyCards" class="cards"></div>
+    </div>
+  </aside>
+</div>
+<script src="src/app.js"></script>
+
+</body>
+
+

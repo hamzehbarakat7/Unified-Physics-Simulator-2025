@@ -1,0 +1,1003 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>محاكي الذرّة v6 — النموذج الذرّي الحقيقي</title>
+  <style>
+:root {
+  --bg: #0a0e14;
+  --panel: #101826;
+  --text: #e6eefc;
+  --muted: #9fb3c8;
+  --accent: #59c1ff;
+  --accent2: #7d58ff;
+  --border: rgba(255, 255, 255, 0.1);
+  --fps: #9cf15a;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: "Segoe UI", Arial, sans-serif;
+  overflow: hidden;
+}
+
+.top-bar {
+  background: var(--panel);
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  border-bottom: 1px solid var(--border);
+}
+
+.top-bar h1 {
+  margin: 0 0 6px;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+label {
+  font-size: 13px;
+  color: var(--muted);
+}
+
+input[type="number"],
+select {
+  background: var(--panel);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 3px 6px;
+  width: 70px;
+}
+
+input[type="range"] {
+  accent-color: var(--accent);
+}
+
+button {
+  background: linear-gradient(135deg, var(--accent), var(--accent2));
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 5px 10px;
+  cursor: pointer;
+  font-size: 13px;
+  transition: opacity 0.2s;
+}
+button:hover {
+  opacity: 0.85;
+}
+
+#elementInfo {
+  margin-top: 8px;
+  padding: 6px 10px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 8px;
+  font-size: 14px;
+  color: var(--accent);
+  line-height: 1.4;
+}
+
+#elementInfo strong {
+  font-size: 15px;
+  color: var(--accent2);
+}
+
+main {
+  position: relative;
+  width: 100vw;
+  height: calc(100vh - 160px);
+}
+
+canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+  background: radial-gradient(circle at center, #0a0d15 0%, #020305 100%);
+}
+
+#infoBar {
+  position: absolute;
+  bottom: 8px;
+  right: 12px;
+  background: rgba(0, 0, 0, 0.6);
+  color: #8fd4ff;
+  padding: 4px 10px;
+  border-radius: 10px;
+  font-size: 13px;
+  font-family: monospace;
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+#fpsDisplay {
+  color: var(--fps);
+  font-weight: bold;
+}
+
+.legend {
+  position: absolute;
+  top: 8px;
+  left: 12px;
+  background: rgba(0, 0, 0, 0.7);
+  padding: 10px 14px;
+  border-radius: 10px;
+  font-size: 13px;
+  color: #fff;
+  border: 1px solid rgba(255,255,255,0.1);
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 5px 0;
+}
+
+.legend-dot {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  box-shadow: 0 0 12px currentColor;
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.7; transform: scale(1.1); }
+}
+
+.bottom {
+  background: var(--panel);
+  border-top: 1px solid var(--border);
+  color: var(--muted);
+  text-align: center;
+  padding: 4px 8px;
+  font-size: 12px;
+}
+
+@media (max-width: 900px) {
+  .controls {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
+  </style>
+</head>
+
+<body class="theme-dark">
+<header class="top-bar">
+  <h1>⚛️ محاكي الذرّة الكامل (Full Quantum Atom)</h1>
+
+  <div class="controls">
+    <label>العنصر:</label>
+    <input id="Zinput" type="number" min="1" max="118" value="6" />
+    <button id="loadElement">تحميل العنصر</button>
+
+    <label>الوضع:</label>
+    <select id="mode">
+      <option value="classical" selected>كلاسيكي 🌀</option>
+      <option value="quantum">كمي ☁️</option>
+    </select>
+
+    <label>نصف القطر:</label>
+    <input id="radius" type="range" min="0.5" max="6" step="0.1" value="2.5" />
+    <label>السرعة:</label>
+    <input id="speed" type="range" min="0.1" max="5" step="0.1" value="1.5" />
+    <label>كثافة السحابة:</label>
+    <input id="opacity" type="range" min="0.2" max="1" step="0.1" value="0.8" />
+    <label>حجم الجسيم:</label>
+    <input id="size" type="range" min="5" max="35" step="1" value="12" />
+    <label><input id="orbitLines" type="checkbox" checked /> خطوط المدار</label>
+
+    <button id="toggleRun">⏯️ تشغيل / إيقاف</button>
+  </div>
+
+  <div id="elementInfo">
+    <strong id="elementName">الكربون</strong>
+    (<span id="elementSymbol">C</span>) — Z=<span id="elementZ">6</span><br />
+    <span id="electronConfig">1s² 2s² 2p²</span> — 
+    <span style="color:#e63939">●</span> <span id="protonCount">6</span> بروتون · 
+    <span style="color:#999999">●</span> <span id="neutronCount">6</span> نيوترون · 
+    <span style="color:#3399ff">●</span> <span id="electronCount">6</span> إلكترون
+  </div>
+</header>
+
+<main>
+  <canvas id="glcanvas"></canvas>
+
+  <div class="legend">
+    <div class="legend-item">
+      <div class="legend-dot" style="background:#e63939;color:#e63939"></div>
+      <span>بروتون (+)</span>
+    </div>
+    <div class="legend-item">
+      <div class="legend-dot" style="background:#999999;color:#999999"></div>
+      <span>نيوترون (0)</span>
+    </div>
+    <div class="legend-item">
+      <div class="legend-dot" style="background:#3399ff;color:#3399ff"></div>
+      <span>إلكترون (-)</span>
+    </div>
+  </div>
+
+  <div id="infoBar">
+    <span id="fpsDisplay">FPS: 0</span> ·
+    <span id="timeDisplay">t = 0.0 s</span> ·
+    <span id="energyDisplay">E = 0.0 eV</span>
+  </div>
+</main>
+
+<footer class="bottom">
+  <small class="muted">
+    محاكاة واقعية ثلاثية الأبعاد لتوزيع الإلكترونات والنواة في الذرّات —
+    تعتمد على المدارات الكمّية (s,p,d,f) مع تأثيرات ضوئية متقدمة.
+  </small>
+</footer>
+
+<script>
+
+const glCanvas = document.getElementById("glcanvas");
+const fpsEl = document.getElementById("fpsDisplay");
+const timeEl = document.getElementById("timeDisplay");
+const energyEl = document.getElementById("energyDisplay");
+const elName = document.getElementById("elementName");
+const elSymbol = document.getElementById("elementSymbol");
+const elZ = document.getElementById("elementZ");
+const elConfig = document.getElementById("electronConfig");
+const protonCountEl = document.getElementById("protonCount");
+const neutronCountEl = document.getElementById("neutronCount");
+const electronCountEl = document.getElementById("electronCount");
+
+let gl, progPoints, progVolumetric, progLines, progNucleusCloud;
+let mode = "classical", running = true;
+let eCount = 6, pCount = 6, nCount = 6;
+let radius = 2.5, speed = 1.5, opacity = 0.8, pointSize = 12.0;
+let orbitLines = true;
+let time = 0, fpsAcc = 0, fpsT0 = performance.now();
+let bufPoints, bufColors, bufLines;
+let bufNucleus, bufNucleusColors, bufNucleusVals;
+
+function initGL(){
+  gl = glCanvas.getContext("webgl",{antialias:true,alpha:false});
+  if(!gl){ alert("WebGL غير مدعوم في هذا المتصفح."); return; }
+  gl.enable(gl.BLEND);
+  gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+  gl.enable(gl.DEPTH_TEST);
+  gl.depthFunc(gl.LEQUAL);
+  gl.clearColor(0.01,0.02,0.04,1);
+  onResize();
+  window.addEventListener("resize",onResize);
+}
+
+function onResize(){
+  const dpr = window.devicePixelRatio||1;
+  const w = glCanvas.clientWidth*dpr, h = glCanvas.clientHeight*dpr;
+  if(glCanvas.width!==w || glCanvas.height!==h){
+    glCanvas.width=w; glCanvas.height=h;
+    gl.viewport(0,0,w,h);
+  }
+}
+
+const Cam = {
+  r: 10, th: 1.1, ph: 1.3,
+  target:[0,0,0],
+  minR:3, maxR:40
+};
+
+function camPos(){
+  const {r,th,ph,target}=Cam;
+  return [
+    target[0]+r*Math.sin(th)*Math.cos(ph),
+    target[1]+r*Math.cos(th),
+    target[2]+r*Math.sin(th)*Math.sin(ph)
+  ];
+}
+
+function lookAt(eye,center,up=[0,1,0]){
+  let [ex,ey,ez]=eye,[cx,cy,cz]=center;
+  let zx=ex-cx,zy=ey-cy,zz=ez-cz;
+  const zn=1/Math.hypot(zx,zy,zz);zx*=zn;zy*=zn;zz*=zn;
+  let xx=up[1]*zz-up[2]*zy,xy=up[2]*zx-up[0]*zz,xz=up[0]*zy-up[1]*zx;
+  const xn=1/Math.hypot(xx,xy,xz);xx*=xn;xy*=xn;xz*=xn;
+  let yx=zy*xz-zz*xy,yy=zz*xx-zx*xz,yz=zx*xy-zy*xx;
+  return [xx,yx,zx,0, xy,yy,zy,0, xz,yz,zz,0,
+          -(xx*ex+xy*ey+xz*ez),
+          -(yx*ex+yy*ey+yz*ez),
+          -(zx*ex+zy*ey+zz*ez),1];
+}
+
+function perspective(fov,asp,n,f){
+  const t=1/Math.tan(fov/2), nf=1/(n-f);
+  return [
+    t/asp,0,0,0,
+    0,t,0,0,
+    0,0,(f+n)*nf,-1,
+    0,0,(2*f*n)*nf,0
+  ];
+}
+
+(function(){
+  let dragging=false,lastX=0,lastY=0,isPan=false;
+  glCanvas.addEventListener("mousedown",e=>{
+    dragging=true; lastX=e.clientX; lastY=e.clientY; isPan=e.shiftKey;
+  });
+  window.addEventListener("mouseup",()=>dragging=false);
+  window.addEventListener("mousemove",e=>{
+    if(!dragging)return;
+    const dx=(e.clientX-lastX)/glCanvas.clientWidth;
+    const dy=(e.clientY-lastY)/glCanvas.clientHeight;
+    lastX=e.clientX; lastY=e.clientY;
+    if(isPan){
+      Cam.target[0]-=dx*Cam.r*0.8;
+      Cam.target[1]+=dy*Cam.r*0.8;
+    }else{
+      Cam.ph-=dx*3;
+      Cam.th+=dy*3;
+      Cam.th=Math.max(0.1,Math.min(Math.PI-0.1,Cam.th));
+    }
+  });
+  glCanvas.addEventListener("wheel",e=>{
+    Cam.r*=1+Math.sign(e.deltaY)*0.1;
+    Cam.r=Math.max(Cam.minR,Math.min(Cam.maxR,Cam.r));
+    e.preventDefault();
+  },{passive:false});
+})();
+
+const elementBase = [
+  ["H","الهيدروجين"],["He","الهيليوم"],["Li","الليثيوم"],["Be","البيريليوم"],["B","البورون"],
+  ["C","الكربون"],["N","النيتروجين"],["O","الأوكسجين"],["F","الفلور"],["Ne","النيون"],
+  ["Na","الصوديوم"],["Mg","المغنيسيوم"],["Al","الألومنيوم"],["Si","السليكون"],["P","الفسفور"],
+  ["S","الكبريت"],["Cl","الكلور"],["Ar","الأرجون"],["K","البوتاسيوم"],["Ca","الكالسيوم"],
+  ["Sc","السكانديوم"],["Ti","التيتانيوم"],["V","الفاناديوم"],["Cr","الكروم"],["Mn","المنغنيز"],
+  ["Fe","الحديد"],["Co","الكوبالت"],["Ni","النيكل"],["Cu","النحاس"],["Zn","الزنك"],
+  ["Ga","الغاليوم"],["Ge","الجرمانيوم"],["As","الزرنيخ"],["Se","السيلينيوم"],["Br","البروم"],
+  ["Kr","الكريبتون"],["Rb","الروبيديوم"],["Sr","السترونتيوم"],["Y","الإتريوم"],["Zr","الزركونيوم"],
+  ["Nb","النيوبيوم"],["Mo","الموليبدينوم"],["Tc","التكنيتيوم"],["Ru","الروثينيوم"],["Rh","الروديوم"],
+  ["Pd","البلاديوم"],["Ag","الفضة"],["Cd","الكادميوم"],["In","الإنديوم"],["Sn","القصدير"],
+  ["Sb","الأنتيمون"],["Te","التيلوريوم"],["I","اليود"],["Xe","الزينون"],["Cs","السيزيوم"],
+  ["Ba","الباريوم"],["La","اللانثانوم"],["Ce","السيريوم"],["Pr","البراسيوديميوم"],["Nd","النيوديميوم"],
+  ["Pm","البروميثيوم"],["Sm","الساماريوم"],["Eu","اليوروبيوم"],["Gd","الجادولينيوم"],["Tb","التربيوم"],
+  ["Dy","الديسبروسيوم"],["Ho","الهولميوم"],["Er","الإربيوم"],["Tm","الثوليوم"],["Yb","الإتيربيوم"],
+  ["Lu","اللوتيتيوم"],["Hf","الهافنيوم"],["Ta","التانتالوم"],["W","التنجستن"],["Re","الرينيوم"],
+  ["Os","الأوزميوم"],["Ir","الإيريديوم"],["Pt","البلاتين"],["Au","الذهب"],["Hg","الزئبق"],
+  ["Tl","الثاليوم"],["Pb","الرصاص"],["Bi","البزموت"],["Po","البولونيوم"],["At","الأستاتين"],
+  ["Rn","الرادون"],["Fr","الفرانسيوم"],["Ra","الراديوم"],["Ac","الأكتينيوم"],["Th","الثوريوم"],
+  ["Pa","البروتكتينيوم"],["U","اليورانيوم"],["Np","النبتونيوم"],["Pu","البلوتونيوم"],["Am","الأمريسيوم"],
+  ["Cm","الكوريوم"],["Bk","البركليوم"],["Cf","الكاليفورنيوم"],["Es","الأينشتاينيوم"],["Fm","الفرميوم"],
+  ["Md","المندليفيوم"],["No","النوبليوم"],["Lr","اللورنسيوم"],["Rf","الرذرفورديوم"],["Db","الدوبنيوم"],
+  ["Sg","السيبورغيوم"],["Bh","البوريوم"],["Hs","الهاسيوم"],["Mt","المايتنريوم"],["Ds","الدارمشتاتيوم"],
+  ["Rg","الرونتجينيوم"],["Cn","الكوبرنيسيوم"],["Nh","النيهونيوم"],["Fl","الفليروفيوم"],["Mc","الموسكوفيوم"],
+  ["Lv","الليفرموريوم"],["Ts","التينيسين"],["Og","الأوغانيسون"]
+];
+
+const elements = {};
+for(let i=1;i<=118;i++){
+  const base = elementBase[i-1] || [`E${i}`,"عنصر رقم "+i];
+  elements[i] = {
+    sym: base[0],
+    name: base[1],
+    config: buildElectronConfig(i)
+  };
+}
+
+function buildElectronConfig(Z){
+  const order = [
+    "1s","2s","2p","3s","3p","4s","3d","4p",
+    "5s","4d","5p","6s","4f","5d","6p","7s","5f","6d","7p"
+  ];
+  const cap = {s:2,p:6,d:10,f:14};
+  let rem = Z;
+  const conf = [];
+  for(const o of order){
+    const ltr = o.slice(-1);
+    const take = Math.min(rem, cap[ltr]);
+    if(take > 0) conf.push(`${o}${take}`);
+    rem -= take;
+    if(rem <= 0) break;
+  }
+  return conf.join(" ");
+}
+
+function randn(){
+  let u=0,v=0;while(u===0)u=Math.random();while(v===0)v=Math.random();
+  return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v);
+}
+
+let nucleusParticles = [];
+let nucleusCloud = [];
+
+function buildNucleus(){
+  nucleusParticles = [];
+  const total = pCount + nCount;
+  const nucleusRadius = 0.08 * Math.cbrt(total);
+  
+  let protons = [];
+  let neutrons = [];
+  
+  for(let i = 0; i < pCount; i++){
+    const phi = Math.acos(1 - 2 * (i + 0.5) / pCount);
+    const theta = Math.PI * (1 + Math.sqrt(5)) * i;
+    const r = nucleusRadius * (0.7 + Math.random() * 0.3);
+    protons.push({
+      pos:[
+        r * Math.sin(phi) * Math.cos(theta) - nucleusRadius * 0.2,
+        r * Math.sin(phi) * Math.sin(theta),
+        r * Math.cos(phi)
+      ],
+      col: [0.9,0.2,0.2],
+      type: 'proton'
+    });
+  }
+  
+  for(let i = 0; i < nCount; i++){
+    const phi = Math.acos(1 - 2 * (i + 0.5) / nCount);
+    const theta = Math.PI * (1 + Math.sqrt(5)) * i;
+    const r = nucleusRadius * (0.7 + Math.random() * 0.3);
+    neutrons.push({
+      pos:[
+        r * Math.sin(phi) * Math.cos(theta) + nucleusRadius * 0.2,
+        r * Math.sin(phi) * Math.sin(theta),
+        r * Math.cos(phi)
+      ],
+      col: [0.6,0.6,0.6],
+      type: 'neutron'
+    });
+  }
+  
+  nucleusParticles = [...protons, ...neutrons];
+}
+
+function generateNucleusCloud(){
+  nucleusCloud = [];
+  const total = pCount + nCount;
+  const nucleusRadius = 0.08 * Math.cbrt(total);
+  const N = 6000 + total * 100;
+  
+  for(let i = 0; i < N; i++){
+    const r = nucleusRadius * Math.pow(Math.random(), 0.3);
+    const theta = Math.acos(1 - 2 * Math.random());
+    const phi = Math.random() * 2 * Math.PI;
+    
+    const prob = Math.exp(-2.5 * r / nucleusRadius);
+    
+    const isProton = Math.random() < (pCount / total);
+    const offset = isProton ? -nucleusRadius * 0.2 : nucleusRadius * 0.2;
+    const col = isProton ? [0.9,0.2,0.2] : [0.6,0.6,0.6];
+    
+    nucleusCloud.push({
+      pos:[
+        r * Math.sin(theta) * Math.cos(phi) + offset,
+        r * Math.sin(theta) * Math.sin(phi),
+        r * Math.cos(theta)
+      ],
+      val: prob,
+      col: col
+    });
+  }
+}
+
+let classicalElectrons = [];
+
+function buildElectronOrbitals(Z){
+  classicalElectrons = [];
+  const config = buildElectronConfig(Z).split(" ");
+  const orbitals = [];
+
+  for(const part of config){
+    const n = +part[0];
+    const ltr = part[1];
+    const count = parseInt(part.slice(2)) || 1;
+    orbitals.push({n,ltr,count});
+  }
+
+  let electronIndex = 0;
+  for(const orb of orbitals){
+    const {n,ltr,count} = orb;
+    const r = n * 0.9 * radius;
+    
+    for(let i=0;i<count;i++){
+      const phi = (electronIndex / Z) * 2 * Math.PI;
+      const theta = Math.PI / 2;
+      const omega = 0.8 / (n * n);
+      
+      classicalElectrons.push({
+        r, theta, phi, omega,
+        n, 
+        startPhi: phi,
+        pos:[
+          r*Math.sin(theta)*Math.cos(phi),
+          r*Math.cos(theta),
+          r*Math.sin(theta)*Math.sin(phi)
+        ],
+        col:[0.2,0.5,1.0]
+      });
+      electronIndex++;
+    }
+  }
+  eCount = classicalElectrons.length;
+}
+
+let quantumCloud = [];
+
+function generateQuantumCloud(){
+  quantumCloud=[];
+  const total = eCount;
+  const N = 25000 + total*2000;
+  for(let i=0;i<N;i++){
+    const r = radius * Math.pow(Math.random(),0.5);
+    const theta = Math.acos(1-2*Math.random());
+    const phi = Math.random()*2*Math.PI;
+    
+    const val = Math.exp(-1.5*r) * Math.pow(Math.sin(theta),1.5);
+    
+    quantumCloud.push({
+      pos:[r*Math.sin(theta)*Math.cos(phi),
+           r*Math.cos(theta),
+           r*Math.sin(theta)*Math.sin(phi)],
+      val
+    });
+  }
+}
+
+function updatePhysics(dt){
+  if(mode==="classical"){
+    for(let e of classicalElectrons){
+      e.phi += e.omega * dt * speed;
+      const {r,theta,phi} = e;
+      e.pos = [
+        r*Math.sin(theta)*Math.cos(phi),
+        r*Math.cos(theta),
+        r*Math.sin(theta)*Math.sin(phi)
+      ];
+    }
+  } else {
+    for(let q of quantumCloud){
+      q.phase = Math.sin(time*0.5 + q.pos[0]*0.2 + q.pos[1]*0.2);
+    }
+  }
+}
+
+function makeShader(type,src){
+  const s = gl.createShader(type);
+  gl.shaderSource(s,src);
+  gl.compileShader(s);
+  if(!gl.getShaderParameter(s,gl.COMPILE_STATUS)){
+    console.error("Shader error:", gl.getShaderInfoLog(s));
+  }
+  return s;
+}
+
+function makeProgram(vsSrc,fsSrc){
+  const vs = makeShader(gl.VERTEX_SHADER,vsSrc);
+  const fs = makeShader(gl.FRAGMENT_SHADER,fsSrc);
+  const p = gl.createProgram();
+  gl.attachShader(p,vs);
+  gl.attachShader(p,fs);
+  gl.linkProgram(p);
+  if(!gl.getProgramParameter(p,gl.LINK_STATUS))
+    console.error("Program link error:", gl.getProgramInfoLog(p));
+  return p;
+}
+
+function createPointShader(){
+  const vs = `
+    attribute vec3 aPos;
+    attribute vec3 aColor;
+    uniform mat4 uP, uV;
+    uniform float uSize;
+    varying vec3 vColor;
+    void main(){
+      gl_Position = uP * uV * vec4(aPos,1.0);
+      gl_PointSize = uSize;
+      vColor = aColor;
+    }
+  `;
+  const fs = `
+    precision mediump float;
+    varying vec3 vColor;
+    void main(){
+      vec2 coord = gl_PointCoord - vec2(0.5);
+      float d = length(coord);
+      if(d > 0.5) discard;
+      
+      float core = 1.0 - smoothstep(0.0, 0.5, d);
+      float rim = smoothstep(0.35, 0.5, d);
+      
+      vec3 coreColor = vColor * 1.2;
+      vec3 rimColor = vColor * 0.7;
+      vec3 finalColor = mix(coreColor, rimColor, rim);
+      
+      float alpha = core * 0.95;
+      
+      gl_FragColor = vec4(finalColor, alpha);
+    }
+  `;
+  progPoints = makeProgram(vs,fs);
+}
+
+function createVolumetricShader(){
+  const vs = `
+    attribute vec3 aPos;
+    attribute float aVal;
+    uniform mat4 uP, uV;
+    varying float vVal;
+    varying float vR;
+    void main(){
+      gl_Position = uP * uV * vec4(aPos,1.0);
+      gl_PointSize = 4.0;
+      vVal = aVal;
+      vR = length(aPos);
+    }
+  `;
+  const fs = `
+    precision mediump float;
+    varying float vVal;
+    varying float vR;
+    uniform float uTime;
+    uniform float uOpacity;
+    void main(){
+      float d = length(gl_PointCoord - vec2(0.5));
+      if(d > 0.5) discard;
+      
+      float prob = vVal * 2.0;
+      prob = clamp(prob, 0.0, 1.0);
+      
+      float pulse = 0.9 + 0.1 * sin(uTime * 1.2 + vR * 2.0);
+      
+      vec3 lowProb = vec3(0.1, 0.2, 0.5);
+      vec3 medProb = vec3(0.3, 0.5, 0.9);
+      vec3 highProb = vec3(0.5, 0.8, 1.0);
+      
+      vec3 color;
+      if(prob < 0.5) {
+        color = mix(lowProb, medProb, prob * 2.0);
+      } else {
+        color = mix(medProb, highProb, (prob - 0.5) * 2.0);
+      }
+      
+      color *= pulse;
+      
+      float intensity = (1.0 - d * 2.0) * prob;
+      float alpha = intensity * uOpacity * 0.8;
+      
+      gl_FragColor = vec4(color, alpha);
+    }
+  `;
+  progVolumetric = makeProgram(vs,fs);
+}
+
+function createNucleusCloudShader(){
+  const vs = `
+    attribute vec3 aPos;
+    attribute vec3 aColor;
+    attribute float aVal;
+    uniform mat4 uP, uV;
+    varying vec3 vColor;
+    varying float vVal;
+    void main(){
+      gl_Position = uP * uV * vec4(aPos,1.0);
+      gl_PointSize = 2.5;
+      vColor = aColor;
+      vVal = aVal;
+    }
+  `;
+  const fs = `
+    precision mediump float;
+    varying vec3 vColor;
+    varying float vVal;
+    void main(){
+      float d = length(gl_PointCoord - vec2(0.5));
+      if(d > 0.5) discard;
+      
+      float edge = smoothstep(0.5, 0.3, d);
+      float alpha = edge * vVal * 0.7;
+      
+      gl_FragColor = vec4(vColor, alpha);
+    }
+  `;
+  progNucleusCloud = makeProgram(vs,fs);
+}
+
+function createLineShader(){
+  const vs = `
+    attribute vec3 aPos;
+    uniform mat4 uP, uV;
+    void main(){
+      gl_Position = uP * uV * vec4(aPos,1.0);
+    }
+  `;
+  const fs = `
+    precision mediump float;
+    uniform vec3 uColor;
+    void main(){
+      gl_FragColor = vec4(uColor,0.4);
+    }
+  `;
+  progLines = makeProgram(vs, fs);
+
+  bufPoints = gl.createBuffer();
+  bufColors = gl.createBuffer();
+  bufLines = gl.createBuffer();
+  
+  // *** هذا هو الإصلاح ***
+  // تهيئة المخازن المؤقتة لسحابة النواة
+  bufNucleus = gl.createBuffer();
+  bufNucleusColors = gl.createBuffer();
+  bufNucleusVals = gl.createBuffer();
+}
+
+function initPrograms(){
+  createPointShader();
+  createVolumetricShader();
+  createNucleusCloudShader();
+  createLineShader();
+}
+
+function drawAllPoints(objects, sizeMul=1.0){
+  if(objects.length === 0) return;
+  
+  gl.useProgram(progPoints);
+  const uP = gl.getUniformLocation(progPoints,"uP");
+  const uV = gl.getUniformLocation(progPoints,"uV");
+  const uS = gl.getUniformLocation(progPoints,"uSize");
+  
+  gl.uniformMatrix4fv(uP,false,matP);
+  gl.uniformMatrix4fv(uV,false,matV);
+  gl.uniform1f(uS, pointSize * sizeMul);
+  
+  const positions = [];
+  const colors = [];
+  for(let o of objects){
+    positions.push(...o.pos);
+    colors.push(...o.col);
+  }
+  
+  const posAttr = gl.getAttribLocation(progPoints,"aPos");
+  const colAttr = gl.getAttribLocation(progPoints,"aColor");
+  
+  gl.bindBuffer(gl.ARRAY_BUFFER, bufPoints);
+  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(positions), gl.DYNAMIC_DRAW);
+  gl.enableVertexAttribArray(posAttr);
+  gl.vertexAttribPointer(posAttr, 3, gl.FLOAT, false, 0, 0);
+  
+  gl.bindBuffer(gl.ARRAY_BUFFER, bufColors);
+  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(colors), gl.DYNAMIC_DRAW);
+  gl.enableVertexAttribArray(colAttr);
+  gl.vertexAttribPointer(colAttr, 3, gl.FLOAT, false, 0, 0);
+  
+  gl.drawArrays(gl.POINTS, 0, objects.length);
+}
+
+function drawQuantumCloud(){
+  if(quantumCloud.length===0) return;
+  gl.useProgram(progVolumetric);
+  const uP = gl.getUniformLocation(progVolumetric,"uP");
+  const uV = gl.getUniformLocation(progVolumetric,"uV");
+  const uT = gl.getUniformLocation(progVolumetric,"uTime");
+  const uO = gl.getUniformLocation(progVolumetric,"uOpacity");
+  gl.uniformMatrix4fv(uP,false,matP);
+  gl.uniformMatrix4fv(uV,false,matV);
+  gl.uniform1f(uT,time);
+  gl.uniform1f(uO,opacity);
+  
+  const posAttr = gl.getAttribLocation(progVolumetric,"aPos");
+  const valAttr = gl.getAttribLocation(progVolumetric,"aVal");
+
+  const positions = [];
+  const values = [];
+  for(let q of quantumCloud){ 
+    positions.push(...q.pos);
+    values.push(q.val);
+  }
+  
+  gl.bindBuffer(gl.ARRAY_BUFFER,bufPoints);
+  gl.bufferData(gl.ARRAY_BUFFER,new Float32Array(positions),gl.STREAM_DRAW);
+  gl.enableVertexAttribArray(posAttr);
+  gl.vertexAttribPointer(posAttr,3,gl.FLOAT,false,0,0);
+  
+  gl.bindBuffer(gl.ARRAY_BUFFER,bufColors);
+  gl.bufferData(gl.ARRAY_BUFFER,new Float32Array(values),gl.STREAM_DRAW);
+  gl.enableVertexAttribArray(valAttr);
+  gl.vertexAttribPointer(valAttr,1,gl.FLOAT,false,0,0);
+  
+  gl.drawArrays(gl.POINTS,0,quantumCloud.length);
+}
+
+function drawNucleusCloud(){
+  if(nucleusCloud.length === 0) return;
+  
+  gl.useProgram(progNucleusCloud);
+  const uP = gl.getUniformLocation(progNucleusCloud,"uP");
+  const uV = gl.getUniformLocation(progNucleusCloud,"uV");
+  
+  gl.uniformMatrix4fv(uP,false,matP);
+  gl.uniformMatrix4fv(uV,false,matV);
+  
+  const posAttr = gl.getAttribLocation(progNucleusCloud,"aPos");
+  const colAttr = gl.getAttribLocation(progNucleusCloud,"aColor");
+  const valAttr = gl.getAttribLocation(progNucleusCloud,"aVal");
+  
+  const positions = [];
+  const colors = [];
+  const values = [];
+  for(let n of nucleusCloud){
+    positions.push(...n.pos);
+    colors.push(...n.col);
+    values.push(n.val);
+  }
+  
+  gl.bindBuffer(gl.ARRAY_BUFFER, bufNucleus);
+  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(positions), gl.STREAM_DRAW);
+  gl.enableVertexAttribArray(posAttr);
+  gl.vertexAttribPointer(posAttr, 3, gl.FLOAT, false, 0, 0);
+  
+  gl.bindBuffer(gl.ARRAY_BUFFER, bufNucleusColors);
+  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(colors), gl.STREAM_DRAW);
+  gl.enableVertexAttribArray(colAttr);
+  gl.vertexAttribPointer(colAttr, 3, gl.FLOAT, false, 0, 0);
+  
+  gl.bindBuffer(gl.ARRAY_BUFFER, bufNucleusVals);
+  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(values), gl.STREAM_DRAW);
+  gl.enableVertexAttribArray(valAttr);
+  gl.vertexAttribPointer(valAttr, 1, gl.FLOAT, false, 0, 0);
+  
+  gl.drawArrays(gl.POINTS, 0, nucleusCloud.length);
+}
+
+function drawOrbitLines(){
+  if(!orbitLines || mode!=="classical") return;
+  gl.useProgram(progLines);
+  const uP = gl.getUniformLocation(progLines,"uP");
+  const uV = gl.getUniformLocation(progLines,"uV");
+  const uC = gl.getUniformLocation(progLines,"uColor");
+  gl.uniformMatrix4fv(uP,false,matP);
+  gl.uniformMatrix4fv(uV,false,matV);
+
+  const shells = {};
+  for(let e of classicalElectrons){
+    if(!shells[e.n]) shells[e.n] = e.r;
+  }
+
+  const N = 80;
+  for(let n in shells){
+    const r = shells[n];
+    const pts=[];
+    for(let i=0;i<=N;i++){
+      const a=(i/N)*2*Math.PI;
+      pts.push(r*Math.cos(a),0,r*Math.sin(a));
+    }
+    gl.bindBuffer(gl.ARRAY_BUFFER,bufLines);
+    gl.bufferData(gl.ARRAY_BUFFER,new Float32Array(pts),gl.STREAM_DRAW);
+    const attrib = gl.getAttribLocation(progLines,"aPos");
+    gl.enableVertexAttribArray(attrib);
+    gl.vertexAttribPointer(attrib,3,gl.FLOAT,false,0,0);
+    gl.uniform3fv(uC,[0.3,0.5,0.8]);
+    gl.drawArrays(gl.LINE_STRIP,0,pts.length/3);
+  }
+}
+
+let matP=[], matV=[];
+function setupView(){
+  const asp = glCanvas.width/glCanvas.height;
+  matP = perspective(50*Math.PI/180, asp, 0.1, 100.0);
+  const eye = camPos();
+  matV = lookAt(eye,Cam.target);
+}
+
+function drawScene(){
+  gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);
+  setupView();
+
+  if(mode === "classical"){
+    drawAllPoints(nucleusParticles, 1.0);
+    drawOrbitLines();
+    drawAllPoints(classicalElectrons, 1.0);
+  }
+  
+  if(mode === "quantum"){
+    drawQuantumCloud();
+    drawNucleusCloud();
+  }
+}
+
+function computeEnergy(){
+  const E = -13.6 * (pCount*pCount) / (Math.pow(radius,2) + 0.5);
+  energyEl.textContent = `E = ${E.toFixed(2)} eV`;
+}
+
+function loop(now){
+  const dt = 0.016;
+  if(running) time += dt;
+  updatePhysics(dt);
+  computeEnergy();
+  drawScene();
+
+  fpsAcc++;
+  if(now - fpsT0 > 500){
+    const fps = (fpsAcc*1000)/(now - fpsT0);
+    fpsEl.textContent = `FPS: ${fps.toFixed(0)}`;
+    fpsT0 = now; fpsAcc = 0;
+  }
+
+  timeEl.textContent = `t = ${time.toFixed(1)} s`;
+  requestAnimationFrame(loop);
+}
+
+function loadElement(Z){
+  pCount = Z;
+  eCount = Z;
+  nCount = Math.round(Z * 1.2);
+
+  const el = elements[Z] || {sym:"?",name:"عنصر غير معروف",config:""};
+  elSymbol.textContent = el.sym;
+  elName.textContent = el.name;
+  elZ.textContent = Z;
+  elConfig.textContent = el.config || buildElectronConfig(Z);
+  
+  protonCountEl.textContent = pCount;
+  neutronCountEl.textContent = nCount;
+  electronCountEl.textContent = eCount;
+
+  buildNucleus();
+  buildElectronOrbitals(Z);
+  if(mode==="quantum"){
+    generateQuantumCloud();
+    generateNucleusCloud();
+  }
+}
+
+document.getElementById("mode").onchange = e => {
+  mode = e.target.value;
+  if(mode==="quantum"){
+    generateQuantumCloud();
+    generateNucleusCloud();
+  } else {
+    buildElectronOrbitals(pCount);
+  }
+};
+
+document.getElementById("radius").oninput = e => {
+  radius = +e.target.value;
+  if(mode==="quantum"){
+    generateQuantumCloud();
+    generateNucleusCloud();
+  } else {
+    buildElectronOrbitals(pCount);
+  }
+};
+
+document.getElementById("speed").oninput = e => { speed = +e.target.value; };
+document.getElementById("opacity").oninput = e => { opacity = +e.target.value; };
+document.getElementById("size").oninput = e => { pointSize = +e.target.value; };
+document.getElementById("orbitLines").onchange = e => { orbitLines = e.target.checked; };
+document.getElementById("toggleRun").onclick = () => { running = !running; };
+
+document.getElementById("loadElement").onclick = () => {
+  const Z = parseInt(document.getElementById("Zinput").value);
+  if(Z>=1 && Z<=118) loadElement(Z);
+};
+
+function startSimulator(){
+  initGL();        // أولاً تهيئة WebGL
+  initPrograms();  // ثم إنشاء الـ shaders
+  loadElement(6);
+  requestAnimationFrame(loop);
+}
+
+
+startSimulator();
+</script>
+</body>
+</html>

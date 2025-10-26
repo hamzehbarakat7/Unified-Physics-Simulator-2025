@@ -1,0 +1,154 @@
+/* =====================================================
+   quantum_v5.css — Arabic Edition
+   ===================================================== */
+
+:root {
+  --bg: #0b0f16;
+  --panel: #101826;
+  --text: #e6eefc;
+  --muted: #9fb3c8;
+  --accent: #59c1ff;
+  --accent2: #7d58ff;
+  --border: rgba(255, 255, 255, 0.1);
+  --fps: #9cf15a;
+}
+.theme-light {
+  --bg: #f4f7fb;
+  --panel: #ffffff;
+  --text: #1d2433;
+  --muted: #4b5b77;
+  --accent: #0077ff;
+  --accent2: #9b5bff;
+  --border: #ccd5e5;
+  --fps: #008b1a;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: "Segoe UI", Arial, sans-serif;
+  overflow: hidden;
+}
+
+.top-bar {
+  background: var(--panel);
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  border-bottom: 1px solid var(--border);
+}
+
+.top-bar h1 {
+  margin: 0 0 6px;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+label {
+  font-size: 13px;
+  color: var(--muted);
+}
+
+input[type="number"],
+select {
+  background: var(--panel);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 3px 6px;
+  width: 70px;
+}
+
+input[type="range"] {
+  accent-color: var(--accent);
+}
+
+button {
+  background: linear-gradient(135deg, var(--accent), var(--accent2));
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 5px 10px;
+  cursor: pointer;
+  font-size: 13px;
+  transition: opacity 0.2s;
+}
+button:hover {
+  opacity: 0.85;
+}
+
+#elementInfo {
+  margin-top: 8px;
+  padding: 6px 10px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 8px;
+  font-size: 14px;
+  color: var(--accent);
+  line-height: 1.4;
+}
+
+#elementInfo strong {
+  font-size: 15px;
+  color: var(--accent2);
+}
+
+main {
+  position: relative;
+  width: 100vw;
+  height: calc(100vh - 160px);
+}
+
+canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+  background: radial-gradient(circle at center, #101624 0%, #05070b 100%);
+}
+
+#infoBar {
+  position: absolute;
+  bottom: 8px;
+  right: 12px;
+  background: rgba(0, 0, 0, 0.45);
+  color: #8fd4ff;
+  padding: 4px 10px;
+  border-radius: 10px;
+  font-size: 13px;
+  font-family: monospace;
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+#fpsDisplay {
+  color: var(--fps);
+  font-weight: bold;
+}
+
+.bottom {
+  background: var(--panel);
+  border-top: 1px solid var(--border);
+  color: var(--muted);
+  text-align: center;
+  padding: 4px 8px;
+  font-size: 12px;
+}
+
+/* ===== Responsive ===== */
+@media (max-width: 900px) {
+  .controls {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  #elementInfo {
+    font-size: 13px;
+  }
+}
